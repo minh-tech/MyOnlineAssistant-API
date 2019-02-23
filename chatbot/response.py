@@ -114,11 +114,10 @@ class ChatBotResponse:
     def remove_username(self, user_id):
         self.user_dict.pop(user_id, None)
 
-    def welcome(self, user_id="1106", username="Guest", existed=False):
+    def welcome(self, user_id="1106", username="Guest", existed='False'):
         if user_id not in self.user_dict or (self.user_dict[user_id] != username and username != "Guest"):
             self.user_dict[user_id] = username
-
-        if existed:
+        if existed == 'True':
             if "Guest" in username:
                 welcome = "Glad to see you come back|What do you want to know this time?"
             else:

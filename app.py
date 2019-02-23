@@ -1,56 +1,67 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from chatbot.response import ChatBotResponse
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 chatbot = ChatBotResponse()
 
 
 @app.route('/')
 def check_running():
-    return 'Chatbot service is running...'
+    response = jsonify({'data': 'Chatbot service is running...'})
+    return response
 
 
 @app.route('/api/welcome', methods=['POST'])
 def chatbot_welcome():
-    user_id = request.form['user_id']
-    username = request.form['username']
-    existed = request.form['existed']
-    data = chatbot.welcome(user_id, username, existed)
+
+    content = request.get_json()
+    data = chatbot.welcome(content['user_id'], content['username'], content['existed'])
     if data:
         resp = jsonify(status_code=200, data=data)
     else:
         resp = jsonify(status_code=404)
+
+    print(">>>>>> Response: ", resp)
     return resp
 
 
 @app.route('/api/response', methods=['POST'])
 def chatbot_response():
-    user_request = request.form['request']
-    user_id = request.form['user_id']
-    data = chatbot.response(user_request, user_id)
+
+    content = request.get_json()
+    data = chatbot.response(content['request'], content['user_id'])
+    username = chatbot.get_username(content['user_id'])
+    print(">>>>>> Username: ", username)
     if data:
-        resp = jsonify(status_code=200, data=data)
+        resp = jsonify(status_code=200, data=data, username=username)
     else:
         resp = jsonify(status_code=404)
+
+    print(">>>>>> Response: ", resp)
     return resp
 
 
 @app.route('/api/username', methods=['POST'])
 def get_username():
-    user_id = request.form['user_id']
-    data = chatbot.get_username(user_id)
+
+    content = request.get_json()
+    data = chatbot.get_username(content['user_id'])
     if data:
         resp = jsonify(status_code=200, data=data)
     else:
         resp = jsonify(status_code=404)
+    print(">>>>>> Username: ", resp)
     return resp
 
 
 @app.route('/api/remove_username', methods=['POST'])
 def remove_username():
-    user_id = request.form['user_id']
-    chatbot.remove_username(user_id)
+    content = request.get_json()
+    chatbot.remove_username(content['user_id'])
     resp = jsonify(status_code=200)
+    print(">>>>>> Remove username: ", resp)
     return resp
 
 
