@@ -17,9 +17,10 @@ def chatbot_welcome():
 
     content = request.get_json()
 
-    data = chatbot.welcome(content['user_id'], content['username'], content['existed'])
-
+    data, emotion = chatbot.welcome(content['user_id'], content['username'], content['existed'])
+    messages = ""
     if content['existed']:
+        # Query messages from database
         messages = db_utils.get_messages(db.session, content['user_id'])
         messages.append({
             "content": data,
@@ -27,6 +28,7 @@ def chatbot_welcome():
             "name": "Cheri"
         })
     else:
+        # Update messages into database
         db_utils.add_message(db.session, Message(
             user_id=content['user_id'],
             name='Cheri',
@@ -34,7 +36,7 @@ def chatbot_welcome():
             content=data
         ))
     if data:
-        resp = jsonify(status_code=200, data=messages)
+        resp = jsonify(status_code=200, data=messages, emotion=emotion)
     else:
         resp = jsonify(status_code=404)
 
@@ -46,10 +48,11 @@ def chatbot_welcome():
 def chatbot_response():
 
     content = request.get_json()
-    data = chatbot.response(content['request'], content['user_id'])
+    data, emotion = chatbot.response(content['request'], content['user_id'])
     username = chatbot.get_username(content['user_id'])
     print(">>>>>> Username: ", username)
 
+    # Update messages into database
     db_utils.add_message(db.session, Message(
         user_id=content['user_id'],
         name=username,
@@ -57,19 +60,19 @@ def chatbot_response():
         content=content['request']
     ))
 
-    db_utils.add_message(db.session, Message(
-        user_id=content['user_id'],
-        name='Cheri',
-        is_user=False,
-        content=data
-    ))
-
     if data:
-        resp = jsonify(status_code=200, data=data, username=username)
+        db_utils.add_message(db.session, Message(
+            user_id=content['user_id'],
+            name='Cheri',
+            is_user=False,
+            content=data
+        ))
+
+        resp = jsonify(status_code=200, data=data, username=username, emotion=emotion)
     else:
         resp = jsonify(status_code=404)
 
-    print(">>>>>> Response: ", resp)
+    print(">>>>>> Response: ", resp.status_code)
     return resp
 
 

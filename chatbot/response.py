@@ -13,6 +13,7 @@ ERROR_THRESHOLD = 0.25
 CHATBOT_DIR = os.path.dirname(os.path.abspath(__file__))
 ENTITY_TAG = ('PERSON', 'ORGANIZATION')
 
+
 class ChatBotResponse:
 
     def __init__(self):
@@ -97,19 +98,28 @@ class ChatBotResponse:
                                     name, tag = self.get_entity_name(sentence)
                                     if tag == 'PERSON':
                                         self.user_dict[user_id] = name
-                                        response = random.choice(i['responses']) % name
+                                        if "%s" in response:
+                                            response = response % name
+                                    elif tag == 'ORGANIZATION':
+                                        pass
 
-                            if 'extensions' in i:
+                            if "%s" in response:
+                                response = random.choice(i['alternative'])
+                            elif 'extensions' in i:
                                 response += "|" + random.choice(i['extensions'])
 
-                            return response
+                            emotion = ""
+                            if 'emotion' in i:
+                                emotion = i['emotion']
+
+                            return response, emotion
                 results.pop(0)
 
     def get_username(self, user_id):
         if user_id in self.user_dict:
             return self.user_dict[user_id]
         else:
-            return ""
+            return "Guest"
 
     def remove_username(self, user_id):
         self.user_dict.pop(user_id, None)
@@ -125,18 +135,18 @@ class ChatBotResponse:
         else:
             welcome = "Hi, there. How are you? My name is Cheri|I am an online assistant of Minh|" \
                       "What should I call you by?"
-
-        return welcome
+        emotion = 'welcome'
+        return welcome, emotion
 
 
 def main():
     # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     # print(BASE_DIR)
 
-
     chatbot = ChatBotResponse()
-    name = chatbot.response("My name is Harrison")
+    name, emotion = chatbot.response("my name is John")
     print(name)
+    print(emotion)
     # print("chatbot get username: " + chatbot.get_username())
     # response = chatbot.response("Nice to meet you")
     # print(response)
