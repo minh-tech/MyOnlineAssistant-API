@@ -2,6 +2,7 @@ import nltk
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from chatbot.stop_words import ENGLISH_STOP_WORD
+from service_api import constant as ct
 
 # Download the corpora and models
 # nltk.download('punkt')
@@ -28,27 +29,20 @@ def get_wordnet_pos(word_tag):
 
 # Convert pronoun
 def convert_pronoun(word):
-    person1st = ('me', 'my', 'mine', 'myself')
-    person2nd = ('your', 'yours', 'yourself')
-    person3rd_male = ('him', 'his', 'himself')
-    person3rd_female = ('her', 'hers', 'herself')
-    person3rd = ('its', 'itself')
-    person1st_plural = ('us', 'our', 'ours', 'ourselves')
-    person3rd_plural = ('them', 'their', 'theirs', 'themselves')
 
-    if word in person1st:
+    if word in ct.PRONOUNS_1ST:
         return 'i'
-    if word in person2nd:
+    if word in ct.PRONOUNS_2ND:
         return 'you'
-    if word in person3rd_male:
+    if word in ct.PRONOUNS_3RD_MALE:
         return 'he'
-    if word in person3rd_female:
+    if word in ct.PRONOUNS_3RD_FEMALE:
         return 'she'
-    if word in person3rd:
+    if word in ct.PRONOUNS_3RD_THING:
         return 'it'
-    if word in person1st_plural:
+    if word in ct.PRONOUNS_1ST_PLURAL:
         return 'we'
-    if word in person3rd_plural:
+    if word in ct.PRONOUNS_3RD_PLURAL:
         return 'they'
     return word
 
@@ -79,7 +73,6 @@ def main():
     text = "Would you mind to answer me this question?"
     array = tokenize_text(text)
     print(array)
-    print(name)
 
 
 if __name__ == "__main__":

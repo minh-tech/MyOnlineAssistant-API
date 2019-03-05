@@ -1,3 +1,4 @@
+# Constant values used for app.py
 DATA = 'data'
 USER_ID = 'user_id'
 USERNAME = 'username'
@@ -9,6 +10,7 @@ GUEST_NAME = 'Guest'
 REQUEST = 'request'
 IS_USER = 'is_user'
 
+# Constant values used for response.py
 ENTITY_TAG = ('PERSON', 'ORGANIZATION')
 ERROR_THRESHOLD = 0.25
 GET_ENTITY_NAME = 'get_entity_name'
@@ -21,6 +23,7 @@ WELCOME_SENT1 = 'Glad to see you come back|What do you want to know this time?'
 WELCOME_SENT2 = 'Happy to see you again, %s|What do you want to know this time?'
 WELCOME_SENT3 = 'Hi, there. How are you? My name is Cheri|I am an online assistant of Minh|What should I call you by?'
 
+# Constant values used for both response.py and model.py
 WORDS = 'words'
 CLASSES = 'classes'
 TRAIN_X = 'train_x'
@@ -41,4 +44,11 @@ SOFTMAX = 'softmax'
 TF_LOGS = 'tflearn_logs'
 MODEL_TF = 'model.tflearn'
 
-
+# Constant values used for utils.py
+PRONOUNS_1ST = ('me', 'my', 'mine', 'myself')
+PRONOUNS_2ND = ('your', 'yours', 'yourself')
+PRONOUNS_3RD_MALE = ('him', 'his', 'himself')
+PRONOUNS_3RD_FEMALE = ('her', 'hers', 'herself')
+PRONOUNS_3RD_THING = ('its', 'itself')
+PRONOUNS_1ST_PLURAL = ('us', 'our', 'ours', 'ourselves')
+PRONOUNS_3RD_PLURAL = ('them', 'their', 'theirs', 'themselves')
