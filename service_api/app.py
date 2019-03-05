@@ -1,14 +1,14 @@
 from flask import request, jsonify
 from service_api import app, chatbot
 from service_api.models import User, Message
-from datetime import datetime
 from service_api import db
 from service_api import database_utils as db_utils
+from service_api import constant as ct
 
 
 @app.route('/')
 def check_running():
-    response = jsonify({'data': 'Chatbot service is running...'})
+    response = jsonify({ct.DATA: 'Chatbot service is running...'})
     return response
 
 
@@ -17,21 +17,21 @@ def chatbot_welcome():
 
     content = request.get_json()
 
-    data, emotion = chatbot.welcome(content['user_id'], content['username'], content['existed'])
+    data, emotion = chatbot.welcome(content[ct.USER_ID], content[ct.USERNAME], content[ct.EXISTED])
     messages = ""
-    if content['existed']:
+    if content[ct.EXISTED]:
         # Query messages from database
-        messages = db_utils.get_messages(db.session, content['user_id'])
+        messages = db_utils.get_messages(db.session, content[ct.USER_ID])
         messages.append({
-            "content": data,
-            "is_user": False,
-            "name": "Cheri"
+            ct.CONTENT: data,
+            ct.IS_USER: False,
+            ct.NAME: ct.BOT_NAME
         })
     else:
         # Update messages into database
         db_utils.add_message(db.session, Message(
-            user_id=content['user_id'],
-            name='Cheri',
+            user_id=content[ct.USER_ID],
+            name=ct.BOT_NAME,
             is_user=False,
             content=data
         ))
@@ -48,22 +48,22 @@ def chatbot_welcome():
 def chatbot_response():
 
     content = request.get_json()
-    data, emotion = chatbot.response(content['request'], content['user_id'])
-    username = chatbot.get_username(content['user_id'])
+    data, emotion = chatbot.response(content[ct.REQUEST], content[ct.USER_ID])
+    username = chatbot.get_username(content[ct.USER_ID])
     print(">>>>>> Username: ", username)
 
     # Update messages into database
     db_utils.add_message(db.session, Message(
-        user_id=content['user_id'],
+        user_id=content[ct.USER_ID],
         name=username,
         is_user=True,
-        content=content['request']
+        content=content[ct.REQUEST]
     ))
 
     if data:
         db_utils.add_message(db.session, Message(
-            user_id=content['user_id'],
-            name='Cheri',
+            user_id=content[ct.USER_ID],
+            name=ct.BOT_NAME,
             is_user=False,
             content=data
         ))
@@ -79,7 +79,7 @@ def chatbot_response():
 @app.route('/api/messages', methods=['POST'])
 def get_all_messages():
     content = request.get_json()
-    messages = db_utils.get_messages(db.session, content['user_id'])
+    messages = db_utils.get_messages(db.session, content[ct.USER_ID])
     print(">>>>>> messages: ", messages)
     if messages:
         resp = jsonify(status_code=200, data=messages)
@@ -94,7 +94,7 @@ def get_all_messages():
 def get_username():
 
     content = request.get_json()
-    data = chatbot.get_username(content['user_id'])
+    data = chatbot.get_username(content[ct.USER_ID])
     if data:
         resp = jsonify(status_code=200, data=data)
     else:
@@ -106,7 +106,7 @@ def get_username():
 @app.route('/api/remove_username', methods=['POST'])
 def remove_username():
     content = request.get_json()
-    chatbot.remove_username(content['user_id'])
+    chatbot.remove_username(content[ct.USER_ID])
     resp = jsonify(status_code=200)
     print(">>>>>> Remove username: ", resp)
     return resp

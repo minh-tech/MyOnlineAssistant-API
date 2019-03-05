@@ -8,10 +8,10 @@ import os
 from chatbot.stop_words import ENGLISH_STOP_WORD
 from chatbot.utils import lemmatize_words
 from nltk.tag import StanfordNERTagger
+from service_api import constant as ct
 
-ERROR_THRESHOLD = 0.25
+
 CHATBOT_DIR = os.path.dirname(os.path.abspath(__file__))
-ENTITY_TAG = ('PERSON', 'ORGANIZATION')
 
 
 class ChatBotResponse:
@@ -21,56 +21,38 @@ class ChatBotResponse:
         self.context = {}
         self.user_dict = {}
 
-        data = pickle.load(open(CHATBOT_DIR+"/training_data", "rb"))
-        self.words = data['words']
+        data = pickle.load(open(CHATBOT_DIR + "/" + ct.TRAINING_DATA, "rb"))
+        self.words = data[ct.WORDS]
         self.ignore_words = ENGLISH_STOP_WORD
-        self.classes = data['classes']
-        train_x = data['train_x']
-        train_y = data['train_y']
+        self.classes = data[ct.CLASSES]
+        train_x = data[ct.TRAIN_X]
+        train_y = data[ct.TRAIN_Y]
 
-        with open(CHATBOT_DIR+'/intents.json') as json_data:
+        with open(CHATBOT_DIR + '/' + ct.INTENTS_JSON) as json_data:
             self.intents = json.load(json_data)
 
         net = tflearn.input_data(shape=[None, len(train_x[0])])
         net = tflearn.fully_connected(net, 8)
         net = tflearn.fully_connected(net, 8)
-        net = tflearn.fully_connected(net, len(train_y[0]), activation='softmax')
+        net = tflearn.fully_connected(net, len(train_y[0]), activation=ct.SOFTMAX)
         net = tflearn.regression(net)
-        logs = CHATBOT_DIR+'/tflearn_logs'
+        logs = CHATBOT_DIR + '/' + ct.TF_LOGS
         self.model = tflearn.DNN(net, tensorboard_dir=logs)
-        self.model.load(CHATBOT_DIR+'/model.tflearn')
+        self.model.load(CHATBOT_DIR + '/' + ct.MODEL_TF)
 
-    def clean_up_sentence(self, sentence):
-        tokens = nltk.word_tokenize(sentence)
-        tokens = lemmatize_words(tokens)
-        return tokens
-
-    def get_entity_name(self, sentence):
-        tokens = nltk.word_tokenize(sentence)
-        st = StanfordNERTagger(CHATBOT_DIR + '/Standford_lib/english.all.3class.distsim.crf.ser.gz',
-                               CHATBOT_DIR + '/Standford_lib/stanford-ner.jar')
-
-        tagged_words_list = st.tag(tokens)
-        for word, tag in tagged_words_list:
-            if tag in ENTITY_TAG:
-                return word, tag
-        return "", ""
-
-    def bow(self, sentence, show_details=False):
+    def bow(self, sentence):
         sentence_words = self.clean_up_sentence(sentence)
         bag = [0]*len(self.words)
         for sentence_word in sentence_words:
             for i, word in enumerate(self.words):
                 if word == sentence_word:
                     bag[i] = 1
-                    if show_details:
-                        print("found in bag: %s" % word)
                     break
         return np.array(bag)
 
     def classify(self, sentence):
         results = self.model.predict([self.bow(sentence)])[0]
-        results = [[i, r] for i, r in enumerate(results) if r > ERROR_THRESHOLD]
+        results = [[i, r] for i, r in enumerate(results) if r > ct.ERROR_THRESHOLD]
         results.sort(key=lambda x: x[1], reverse=True)
         return_list = []
         for r in results:
@@ -82,35 +64,35 @@ class ChatBotResponse:
         results = self.classify(sentence)
         if results:
             while results:
-                for i in self.intents['intents']:
-                    if i['tag'] == results[0][0]:
+                for i in self.intents[ct.INTENTS]:
+                    if i[ct.TAG] == results[0][0]:
 
-                        if 'context_filter' not in i or \
-                                (user_id in self.context and 'context_filter' in i and
-                                 i['context_filter'] == self.context[user_id]):
+                        if ct.CONTEXT_FILTER not in i or \
+                                (user_id in self.context and ct.CONTEXT_FILTER in i and
+                                 i[ct.CONTEXT_FILTER] == self.context[user_id]):
 
-                            response = random.choice(i['responses'])
-                            if 'context_set' in i:
-                                self.context[user_id] = i['context_set']
+                            response = random.choice(i[ct.RESPONSES])
+                            if ct.CONTEXT_SET in i:
+                                self.context[user_id] = i[ct.CONTEXT_SET]
 
-                            if 'function' in i:
-                                if i['function'] == 'get_entity_name':
+                            if ct.FUNCTION in i:
+                                if i[ct.FUNCTION] == ct.GET_ENTITY_NAME:
                                     name, tag = self.get_entity_name(sentence)
-                                    if tag == 'PERSON':
+                                    if tag == ct.PERSON:
                                         self.user_dict[user_id] = name
                                         if "%s" in response:
                                             response = response % name
-                                    elif tag == 'ORGANIZATION':
+                                    elif tag == ct.ORGANIZATION:
                                         pass
 
                             if "%s" in response:
-                                response = random.choice(i['alternative'])
-                            elif 'extensions' in i:
-                                response += "|" + random.choice(i['extensions'])
+                                response = random.choice(i[ct.ALTERNATIVE])
+                            elif ct.EXTENSIONS in i:
+                                response += "|" + random.choice(i[ct.EXTENSIONS])
 
                             emotion = ""
-                            if 'emotion' in i:
-                                emotion = i['emotion']
+                            if ct.EMOTION in i:
+                                emotion = i[ct.EMOTION]
 
                             return response, emotion
                 results.pop(0)
@@ -119,49 +101,53 @@ class ChatBotResponse:
         if user_id in self.user_dict:
             return self.user_dict[user_id]
         else:
-            return "Guest"
+            return ct.GUEST_NAME
 
     def remove_username(self, user_id):
         self.user_dict.pop(user_id, None)
 
-    def welcome(self, user_id="1106", username="Guest", existed='False'):
-        if user_id not in self.user_dict or (self.user_dict[user_id] != username and username != "Guest"):
+    def welcome(self, user_id, username=ct.GUEST_NAME, existed=ct.FALSE):
+        if user_id not in self.user_dict or (self.user_dict[user_id] != username and username != ct.GUEST_NAME):
             self.user_dict[user_id] = username
-        if existed == 'True':
-            if "Guest" in username:
-                welcome = "Glad to see you come back|What do you want to know this time?"
+        if existed == ct.TRUE:
+            if ct.GUEST_NAME in username:
+                # Glad to see you come back. What do you want to know this time?
+                welcome = ct.WELCOME_SENT1
             else:
-                welcome = "Happy to see you again, %s|What do you want to know this time?" % username
+                # Happy to see you again, name. What do you want to know this time?
+                welcome = ct.WELCOME_SENT2 % username
         else:
-            welcome = "Hi, there. How are you? My name is Cheri|I am an online assistant of Minh|" \
-                      "What should I call you by?"
-        emotion = 'welcome'
+            # Hi, there. How are you? My name is Cheri. I am an online assistant of Minh. What should I call you by?
+            welcome = ct.WELCOME_SENT3
+        emotion = ct.WELCOME
         return welcome, emotion
+
+    @staticmethod
+    def clean_up_sentence(sentence):
+        tokens = nltk.word_tokenize(sentence)
+        tokens = lemmatize_words(tokens)
+        return tokens
+
+    @staticmethod
+    def get_entity_name(sentence):
+        tokens = nltk.word_tokenize(sentence)
+        st = StanfordNERTagger(CHATBOT_DIR + '/Standford_lib/english.all.3class.distsim.crf.ser.gz',
+                               CHATBOT_DIR + '/Standford_lib/stanford-ner.jar')
+
+        tagged_words_list = st.tag(tokens)
+        for word, tag in tagged_words_list:
+            if tag in ct.ENTITY_TAG:
+                return word, tag
+        return "", ""
 
 
 def main():
-    # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    # print(BASE_DIR)
 
     chatbot = ChatBotResponse()
     name, emotion = chatbot.response("my name is John")
     print(name)
     print(emotion)
-    # print("chatbot get username: " + chatbot.get_username())
-    # response = chatbot.response("Nice to meet you")
-    # print(response)
-    # flag = True
-    # print("Cheri: My name is Cheri.")
-    #
-    # while flag:
-    #     user_response = input()
-    #     user_response = user_response.lower()
-    #     if user_response != 'bye':
-    #         print("Cheri: ", end="")
-    #         print(chatbot_response.response(user_response))
-    #     else:
-    #         flag = False
-    #         print("Cheri: Bye! Take care...")
+
     pass
 
 
