@@ -1,9 +1,11 @@
 from flask import request, jsonify
+from datetime import datetime
 from service_api import app, chatbot
 from service_api.models import User, Message
 from service_api import db
 from service_api import database_utils as db_utils
 from service_api import constant as ct
+import os
 
 
 @app.route('/')
@@ -16,7 +18,7 @@ def check_running():
 def chatbot_welcome():
 
     content = request.get_json()
-
+    print(">>>>>> username: " + content[ct.USERNAME])
     data, emotion = chatbot.welcome(content[ct.USER_ID], content[ct.USERNAME], content[ct.EXISTED])
     messages = ""
     if content[ct.EXISTED]:
@@ -109,6 +111,21 @@ def remove_username():
     chatbot.remove_username(content[ct.USER_ID])
     resp = jsonify(status_code=200)
     print(">>>>>> Remove username: ", resp)
+    return resp
+
+
+@app.route('/api/feedback', methods=['POST'])
+def receive_feedback():
+
+    content = request.get_json()
+    feedback_dir = os.path.dirname(os.path.abspath(__file__))
+    filename = "%s/feedback/%s-%s.txt" % (feedback_dir, content[ct.USER_ID], datetime.now().strftime('%Y-%m-%d-%H:%M'))
+
+    with open(filename, "w+") as f:
+        for key, value in content.items():
+            f.write("%s: %s\n" % (key, value))
+
+    resp = jsonify(status_code=200)
     return resp
 
 

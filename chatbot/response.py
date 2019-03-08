@@ -60,7 +60,7 @@ class ChatBotResponse:
         print(return_list)
         return return_list
 
-    def response(self, sentence, user_id='1106'):
+    def response(self, sentence, user_id):
         results = self.classify(sentence)
         if results:
             while results:
