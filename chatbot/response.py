@@ -1,6 +1,8 @@
 import nltk
 import numpy as np
-import tflearn
+# import tflearn
+import tensorflow as tf
+import pandas as pd
 import random
 import pickle
 import json
@@ -31,14 +33,26 @@ class ChatBotResponse:
         with open(CHATBOT_DIR + '/' + ct.INTENTS_JSON) as json_data:
             self.intents = json.load(json_data)
 
-        net = tflearn.input_data(shape=[None, len(train_x[0])])
-        net = tflearn.fully_connected(net, 8)
-        net = tflearn.fully_connected(net, 8)
-        net = tflearn.fully_connected(net, len(train_y[0]), activation=ct.SOFTMAX)
-        net = tflearn.regression(net)
-        logs = CHATBOT_DIR + '/' + ct.TF_LOGS
-        self.model = tflearn.DNN(net, tensorboard_dir=logs)
-        self.model.load(CHATBOT_DIR + '/' + ct.MODEL_TF)
+        # net = tflearn.input_data(shape=[None, len(train_x[0])])
+        # net = tflearn.fully_connected(net, 8)
+        # net = tflearn.fully_connected(net, 8)
+        # net = tflearn.fully_connected(net, len(train_y[0]), activation=ct.SOFTMAX)
+        # net = tflearn.regression(net)
+        # logs = CHATBOT_DIR + '/' + ct.TF_LOGS
+        # self.model = tflearn.DNN(net, tensorboard_dir=logs)
+        # self.model.load(CHATBOT_DIR + '/' + ct.MODEL_TF)
+
+        self.model = tf.keras.models.load_model(ct.MODEL_TF)
+
+        # model = tf.keras.models.Sequential([
+        #     tf.keras.layers.Dense(128, input_shape=(len(train_x[0]),), activation='relu'),
+        #     tf.keras.layers.Dropout(0.5),
+        #     tf.keras.layers.Dense(64, activation='relu'),
+        #     tf.keras.layers.Dropout(0.5),
+        #     tf.keras.layers.Dense(len(train_y[0]), activation=ct.SOFTMAX)
+        # ])
+        # model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+        # model.fit(np.array(train_x), np.array(train_y), epochs=1000, batch_size=8)
 
     def bow(self, sentence):
         sentence_words = self.clean_up_sentence(sentence)
@@ -51,7 +65,8 @@ class ChatBotResponse:
         return np.array(bag)
 
     def classify(self, sentence):
-        results = self.model.predict([self.bow(sentence)])[0]
+        input_data = pd.DataFrame([self.bow(sentence)], dtype=float, index=['input'])
+        results = self.model.predict([input_data])[0]
         results = [[i, r] for i, r in enumerate(results) if r > ct.ERROR_THRESHOLD]
         results.sort(key=lambda x: x[1], reverse=True)
         return_list = []
@@ -144,7 +159,7 @@ class ChatBotResponse:
 def main():
 
     chatbot = ChatBotResponse()
-    name, emotion = chatbot.response("my name is John")
+    name, emotion = chatbot.response("my name is John", 1)
     print(name)
     print(emotion)
 

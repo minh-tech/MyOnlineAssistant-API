@@ -42,7 +42,7 @@ TRAINING_DATA = 'training_data'
 INTENTS_JSON = 'intents.json'
 SOFTMAX = 'softmax'
 TF_LOGS = 'tflearn_logs'
-MODEL_TF = 'model.tflearn'
+MODEL_TF = 'my_model.tf'
 
 # Constant values used for utils.py
 PRONOUNS_1ST = ('me', 'my', 'mine', 'myself')

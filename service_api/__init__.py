@@ -2,7 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
-from chatbot.response import ChatBotResponse
+# from chatbot.response import ChatBotResponse
 
 
 app = Flask(__name__)
@@ -17,4 +17,4 @@ from service_api import models
 db.create_all()
 
 CORS(app, resources={r"/api/*": {"origins": "*"}})
-chatbot = ChatBotResponse()
+# chatbot = ChatBotResponse()

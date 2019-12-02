@@ -4,7 +4,7 @@ from chatbot.utils import lemmatize_words
 
 # Things we need for Tensorflow
 import numpy as np
-import tflearn
+
 import tensorflow as tf
 import random
 
@@ -60,16 +60,29 @@ def create_chatbot_data():
 
     train_x = list(training[:, 0])
     train_y = list(training[:, 1])
+    # print(len(train_x[0]))
 
-    tf.reset_default_graph()
-    net = tflearn.input_data(shape=[None, len(train_x[0])])
-    net = tflearn.fully_connected(net, 8)
-    net = tflearn.fully_connected(net, 8)
-    net = tflearn.fully_connected(net, len(train_y[0]), activation=ct.SOFTMAX)
-    net = tflearn.regression(net)
+    tf.compat.v1.reset_default_graph()
+    # net = tflearn.input_data(shape=[None, len(train_x[0])])
+    # net = tflearn.fully_connected(net, 8)
+    # net = tflearn.fully_connected(net, 8)
+    # net = tflearn.fully_connected(net, len(train_y[0]), activation=ct.SOFTMAX)
+    # net = tflearn.regression(net)
+    #
+    # model = tflearn.DNN(net, tensorboard_dir=ct.TF_LOGS)
+    # model.fit(train_x, train_y, n_epoch=1000, batch_size=8, show_metric=True)
 
-    model = tflearn.DNN(net, tensorboard_dir=ct.TF_LOGS)
-    model.fit(train_x, train_y, n_epoch=1000, batch_size=8, show_metric=True)
+
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Dense(128, input_shape=(len(train_x[0]),), activation='relu'),
+        tf.keras.layers.Dropout(0.5),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dropout(0.5),
+        tf.keras.layers.Dense(len(train_y[0]), activation=ct.SOFTMAX)
+    ])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.fit(np.array(train_x), np.array(train_y), epochs=1000, batch_size=8)
+
     model.save(ct.MODEL_TF)
 
     pickle.dump({ct.WORDS: words, ct.CLASSES: classes, ct.TRAIN_X: train_x, ct.TRAIN_Y: train_y},
@@ -78,7 +91,6 @@ def create_chatbot_data():
 
 def main():
     create_chatbot_data()
-    pass
 
 
 if __name__ == "__main__":
