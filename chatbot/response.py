@@ -1,6 +1,5 @@
 import nltk
 import numpy as np
-# import tflearn
 import tensorflow as tf
 import pandas as pd
 import random
@@ -8,9 +7,9 @@ import pickle
 import json
 import os
 from chatbot.stop_words import ENGLISH_STOP_WORD
-from chatbot.utils import lemmatize_words
+from chatbot.utils import Utils
 from nltk.tag import StanfordNERTagger
-from service_api import constant as ct
+from chatbot import constant as ct
 
 
 CHATBOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -27,32 +26,11 @@ class ChatBotResponse:
         self.words = data[ct.WORDS]
         self.ignore_words = ENGLISH_STOP_WORD
         self.classes = data[ct.CLASSES]
-        train_x = data[ct.TRAIN_X]
-        train_y = data[ct.TRAIN_Y]
 
         with open(CHATBOT_DIR + '/' + ct.INTENTS_JSON) as json_data:
             self.intents = json.load(json_data)
 
-        # net = tflearn.input_data(shape=[None, len(train_x[0])])
-        # net = tflearn.fully_connected(net, 8)
-        # net = tflearn.fully_connected(net, 8)
-        # net = tflearn.fully_connected(net, len(train_y[0]), activation=ct.SOFTMAX)
-        # net = tflearn.regression(net)
-        # logs = CHATBOT_DIR + '/' + ct.TF_LOGS
-        # self.model = tflearn.DNN(net, tensorboard_dir=logs)
-        # self.model.load(CHATBOT_DIR + '/' + ct.MODEL_TF)
-
-        self.model = tf.keras.models.load_model(ct.MODEL_TF)
-
-        # model = tf.keras.models.Sequential([
-        #     tf.keras.layers.Dense(128, input_shape=(len(train_x[0]),), activation='relu'),
-        #     tf.keras.layers.Dropout(0.5),
-        #     tf.keras.layers.Dense(64, activation='relu'),
-        #     tf.keras.layers.Dropout(0.5),
-        #     tf.keras.layers.Dense(len(train_y[0]), activation=ct.SOFTMAX)
-        # ])
-        # model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-        # model.fit(np.array(train_x), np.array(train_y), epochs=1000, batch_size=8)
+        self.model = tf.keras.models.load_model(CHATBOT_DIR + '/' + ct.MODEL_TF)
 
     def bow(self, sentence):
         sentence_words = self.clean_up_sentence(sentence)
@@ -72,7 +50,7 @@ class ChatBotResponse:
         return_list = []
         for r in results:
             return_list.append((self.classes[r[0]], r[1]))
-        print(return_list)
+        # print(return_list)
         return return_list
 
     def response(self, sentence, user_id):
@@ -140,7 +118,7 @@ class ChatBotResponse:
     @staticmethod
     def clean_up_sentence(sentence):
         tokens = nltk.word_tokenize(sentence)
-        tokens = lemmatize_words(tokens)
+        tokens = Utils.lemmatize_words(tokens)
         return tokens
 
     @staticmethod
@@ -156,15 +134,7 @@ class ChatBotResponse:
         return "", ""
 
 
-def main():
-
-    chatbot = ChatBotResponse()
-    name, emotion = chatbot.response("my name is John", 1)
-    print(name)
-    print(emotion)
-
-    pass
-
-
 if __name__ == '__main__':
-    main()
+    response1, emotion1 = ChatBotResponse().response("my name is John", 1)
+    print(response1)
+    print(emotion1)
