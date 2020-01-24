@@ -10,3 +10,5 @@ First time I did it by Django, after that I converted it to API service by Flask
 - Use Standford library to grab a personal name and organization.
 - Use Machine Learning to understand meanings. Algorithm:
 Input -> 128 dots, activation: ReLU -> Dropout(0.5) -> 64 dots, activation: ReLU -> Dropout(0.5) -> Output, activation: Softmax
+
+Note: Check develop branch for the newest code (TensorFlow 2.1)
